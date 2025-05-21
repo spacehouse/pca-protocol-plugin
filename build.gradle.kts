@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
     id("com.gradleup.shadow") version "9.0.0-beta12"
     id("xyz.jpenilla.run-paper") version "2.3.1"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.16" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.17" apply false
 }
 
 allprojects {
@@ -43,10 +43,10 @@ dependencies {
     api(project(":v1_20_2", configuration = "reobf"))
     api(project(":v1_20_3", configuration = "reobf"))
     api(project(":v1_20_6", configuration = "reobf"))
-//    api(project(":v1_21", configuration = "reobf"))
-//    api(project(":v1_21_2", configuration = "reobf"))
-//    api(project(":v1_21_4", configuration = "reobf"))
-//    api(project(":v1_21_5", configuration = "reobf"))
+    api(project(":v1_21", configuration = "reobf"))
+    api(project(":v1_21_3", configuration = "reobf"))
+    api(project(":v1_21_4", configuration = "reobf"))
+    api(project(":v1_21_5", configuration = "reobf"))
 }
 
 tasks {
