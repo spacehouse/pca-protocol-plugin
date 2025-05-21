@@ -5,4 +5,6 @@
 
 依赖 [ProtocolLib](https://github.com/dmulloy2/ProtocolLib)
 
-
+#### Readme.md
+- zh -> [中文](README.md)
+- en -> [English](README.en.md)
