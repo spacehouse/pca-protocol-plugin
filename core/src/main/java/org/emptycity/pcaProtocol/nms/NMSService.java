@@ -20,6 +20,7 @@ public class NMSService {
     private static IWorld world;
     private static IEntity entity;
     private static IBlockEntity blockEntity;
+    private static IDiscardedPayload discardedPayload;
 
 
     public static IResourceLocation getResourceLocation() {
@@ -46,6 +47,9 @@ public class NMSService {
         return blockEntity;
     }
 
+    public static IDiscardedPayload getDiscardedPayload() {
+        return discardedPayload;
+    }
     /**
      * 根据 NMS 版本，反射读取各个实现类
      */
@@ -56,7 +60,7 @@ public class NMSService {
         world = (IWorld) getPackageObjectInstance("object.WorldImpl");
         entity = (IEntity) getPackageObjectInstance("object.EntityImpl");
         blockEntity = (IBlockEntity) getPackageObjectInstance("object.BlockEntityImpl");
-
+        discardedPayload = (IDiscardedPayload) getPackageObjectInstance("object.DiscardedPayloadImpl");
     }
 
     private static final String LATEST_VERSION = "v1_21_5";

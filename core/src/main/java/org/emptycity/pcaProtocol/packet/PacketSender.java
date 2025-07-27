@@ -5,6 +5,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.reflect.accessors.FieldAccessor;
+import com.comphenix.protocol.utility.MinecraftVersion;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.bukkit.entity.Player;
@@ -31,50 +32,63 @@ public class PacketSender {
     public void sendCustomPacket(Player player, String channel, ByteBuf byteByf) {
         // 创建数据包容器
         PacketContainer packet = new PacketContainer(PacketType.Play.Server.CUSTOM_PAYLOAD);
-        // 动态适配字段索引
-        int channelIndex = -1, dataIndex = -1;
-        List<FieldAccessor> fields = packet.getModifier().getFields();
-        for (int i = 0; i < fields.size(); i++) {
-            String fieldName = fields.get(i).getField().getType().toString().toLowerCase();
-            if (fieldName.contains("channel") || fieldName.contains("identifier") || fieldName.contains("key")) {
-                channelIndex = i;
-            } else if (fieldName.contains("data")) {
-                dataIndex = i;
+        if (MinecraftVersion.v1_20_4.atOrAbove()) {
+            // >= 1.20.4
+            Object payload;
+            if (byteByf != null) {
+                byte[] dataBytes = new byte[byteByf.readableBytes()];
+                byteByf.readBytes(dataBytes);
+                payload = NMSService.getDiscardedPayload().constructor(channel, dataBytes);
+            } else {
+                payload = NMSService.getDiscardedPayload().constructor(channel, new byte[]{});
             }
-        }
-
-        if (channelIndex == -1 || dataIndex == -1) {
-            throw new IllegalStateException("the packet fields do not match");
-        }
-
-        // 写入通道名
-        if (packet.getModifier().getField(channelIndex).getType() == String.class) {
-            packet.getStrings().write(channelIndex, channel);
+            packet.getModifier().write(0,payload);
         } else {
-            Object resourceLocation = NMSService.getResourceLocation().getInstance(channel);
-            packet.getModifier().write(channelIndex, resourceLocation);
-        }
+            // 动态适配字段索引
+            int channelIndex = -1, dataIndex = -1;
+            List<FieldAccessor> fields = packet.getModifier().getFields();
+            for (int i = 0; i < fields.size(); i++) {
+                String fieldName = fields.get(i).getField().getType().toString().toLowerCase();
+                if (fieldName.contains("channel") || fieldName.contains("identifier") || fieldName.contains("key")) {
+                    channelIndex = i;
+                } else if (fieldName.contains("data")) {
+                    dataIndex = i;
+                }
+            }
 
-        // 设置数据体（动态处理 PacketDataSerializer 或 byte[]）
-        Class<?> dataFieldType = packet.getModifier().getField(dataIndex).getType();
-        if (dataFieldType == byte[].class) {
-            PcaProtocol.LOGGER.debug("旧版数据包");
-            // 旧版本直接写入 byte[]
-            ByteBuf buf = Unpooled.buffer();
-            if (byteByf != null) {
-                buf = byteByf;
+            if (channelIndex == -1 || dataIndex == -1) {
+                throw new IllegalStateException("the packet fields do not match");
             }
-            byte[] dataBytes = new byte[buf.readableBytes()];
-            buf.readBytes(dataBytes);
-            packet.getByteArrays().write(dataIndex, dataBytes);
-        } else if (dataFieldType.toString().contains("PacketDataSerializer")) {
-            // 新版本写入 PacketDataSerializer
-            ByteBuf buf = Unpooled.buffer();
-            if (byteByf != null) {
-                buf = byteByf;
+
+            // 写入通道名
+            if (packet.getModifier().getField(channelIndex).getType() == String.class) {
+                packet.getStrings().write(channelIndex, channel);
+            } else {
+                Object resourceLocation = NMSService.getResourceLocation().getInstance(channel);
+                packet.getModifier().write(channelIndex, resourceLocation);
             }
-            Object friendlyByteBuf = NMSService.getFriendlyByteBuf().getInstance(buf);
-            packet.getModifier().write(dataIndex, friendlyByteBuf);
+
+            // 设置数据体（动态处理 PacketDataSerializer 或 byte[]）
+            Class<?> dataFieldType = packet.getModifier().getField(dataIndex).getType();
+            if (dataFieldType == byte[].class) {
+                PcaProtocol.LOGGER.debug("旧版数据包");
+                // 旧版本直接写入 byte[]
+                ByteBuf buf = Unpooled.buffer();
+                if (byteByf != null) {
+                    buf = byteByf;
+                }
+                byte[] dataBytes = new byte[buf.readableBytes()];
+                buf.readBytes(dataBytes);
+                packet.getByteArrays().write(dataIndex, dataBytes);
+            } else if (dataFieldType.toString().contains("PacketDataSerializer")) {
+                // 新版本写入 PacketDataSerializer
+                ByteBuf buf = Unpooled.buffer();
+                if (byteByf != null) {
+                    buf = byteByf;
+                }
+                Object friendlyByteBuf = NMSService.getFriendlyByteBuf().getInstance(buf);
+                packet.getModifier().write(dataIndex, friendlyByteBuf);
+            }
         }
 
         // 5. 发送数据包

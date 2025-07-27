@@ -7,8 +7,10 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Bukkit;
@@ -37,7 +39,8 @@ public final class PcaProtocol extends JavaPlugin {
         pca = this;
         NMSService.init();
         // Plugin startup logic
-        version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+        String minecraftVersion = Bukkit.getServer().getVersion().split("\\(")[1].split("\\)")[0].split(":")[1].trim();
+        version = convertToCraftBukkitVersion(minecraftVersion);
         plugin = this;
         LOGGER.info("version: {}", version);
         LOGGER.info("Server: {}", Bukkit.getServer());
@@ -61,21 +64,32 @@ public final class PcaProtocol extends JavaPlugin {
             public void onPacketReceiving(PacketEvent event) {
                 LOGGER.debug("CUSTOM_PAYLOAD数据包接收");
                 PacketContainer packet = event.getPacket();
-                String field0 = packet.getModifier().read(0).toString();
-                Object field1 = packet.getModifier().read(1);
-                LOGGER.debug("channel：{}", field0);
-                // 获取原始字节缓冲区
-                ByteBuf rawData = (ByteBuf) field1;
+                String key;
+                Object payload;
+                ByteBuf rawData;
+                if (MinecraftVersion.v1_20_4.atOrAbove()) {
+                    // >= 1.20.4
+                    payload = packet.getModifier().read(0);
+                    key = NMSService.getDiscardedPayload().getId(payload);
+                    rawData = Unpooled.wrappedBuffer(NMSService.getDiscardedPayload().getData(payload));
+                } else {
+                    key = packet.getModifier().read(0).toString();
+                    payload = packet.getModifier().read(1);
+                    // 获取原始字节缓冲区
+                    rawData = (ByteBuf) payload;
+                }
+                LOGGER.debug("key：{}", key);
+                LOGGER.debug("payload：{}", payload);
                 rawData.resetReaderIndex();
                 // 创建副本避免影响原始数据
                 ByteBuf data = rawData.copy();
-                if (PcaSyncProtocol.SYNC_ENTITY.equals(field0)) {
+                if (PcaSyncProtocol.SYNC_ENTITY.equals(key)) {
                     // 同步实体数据
 //                    PacketByteBufUtil.log(data);
                     int entityId = PacketByteBufUtil.readVarInt(data);
                     LOGGER.debug("entityId：{}",entityId);
                     PcaSyncProtocol.syncEntityHandler(entityId, event.getPlayer());
-                } else if (PcaSyncProtocol.SYNC_BLOCK_ENTITY.equals(field0)) {
+                } else if (PcaSyncProtocol.SYNC_BLOCK_ENTITY.equals(key)) {
                     // 同步方块实体数据
 //                    PacketByteBufUtil.log(data);
                     long blockPositionLong = PacketByteBufUtil.readLong(data);
@@ -108,6 +122,21 @@ public final class PcaProtocol extends JavaPlugin {
 
     public static PcaProtocol getInstance() {
         return pca;
+    }
+
+    public static String convertToCraftBukkitVersion(String minecraftVersion) {
+        // 将版本号通过 "." 拆分成数组
+        String[] parts = minecraftVersion.split("\\.");
+
+        // 主版本和次版本
+        String majorVersion = parts[0]; // "1"
+        String minorVersion = parts[1]; // "20"
+
+        // 小版本号
+        String patchVersion = parts.length > 2 ? parts[2] : "0"; // "1" 或 "0"
+
+        // 拼接成 CraftBukkit 风格的版本号: v1_20_R1
+        return "v" + majorVersion + "_" + minorVersion + "_R" + patchVersion;
     }
 
 }

@@ -6,6 +6,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.emptycity.pcaProtocol.PcaProtocol;
 import org.emptycity.pcaProtocol.object.IWorld;
 
 /**
@@ -17,7 +18,7 @@ public class WorldImpl implements IWorld {
     @Override
     public Level getInstance(World world) {
         try {
-            Class<?> craftWorldClass = Class.forName("org.bukkit.craftbukkit." + Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3] + ".CraftWorld");
+            Class<?> craftWorldClass = Class.forName("org.bukkit.craftbukkit." + PcaProtocol.version + ".CraftWorld");
             Object craftWorld = craftWorldClass.cast(world);
             return (Level) craftWorld.getClass().getDeclaredMethod("getHandle").invoke(craftWorld);
         } catch (Exception e) {
