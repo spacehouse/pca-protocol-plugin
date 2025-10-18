@@ -63,7 +63,7 @@ public class NMSService {
         discardedPayload = (IDiscardedPayload) getPackageObjectInstance("object.DiscardedPayloadImpl");
     }
 
-    private static final String LATEST_VERSION = "v1_21_5";
+    private static final String LATEST_VERSION = "v1_21_8";
     private static final Map<String, String> VERSION_MAPPING = new HashMap<String, String>() {{
         put("1.17", "v1_17_1");
         put("1.17.1", "v1_17_1");
@@ -88,6 +88,9 @@ public class NMSService {
         put("1.21.3", "v1_21_3");
         put("1.21.4", "v1_21_4");
         put("1.21.5", "v1_21_5");
+        put("1.21.6", "v1_21_6");
+        put("1.21.7", "v1_21_7");
+        put("1.21.8", "v1_21_7");
     }};
 
     private static String serverVersion;
