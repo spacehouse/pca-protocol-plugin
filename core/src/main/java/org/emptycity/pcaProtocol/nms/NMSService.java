@@ -60,7 +60,11 @@ public class NMSService {
         world = (IWorld) getPackageObjectInstance("object.WorldImpl");
         entity = (IEntity) getPackageObjectInstance("object.EntityImpl");
         blockEntity = (IBlockEntity) getPackageObjectInstance("object.BlockEntityImpl");
-        discardedPayload = (IDiscardedPayload) getPackageObjectInstance("object.DiscardedPayloadImpl");
+        String currentVersion = getPackageVersion();
+        // above 1.20.4
+        if (Integer.parseInt(currentVersion.split("_")[1]) > 20 || "v1_20_6".equals(currentVersion)) {
+            discardedPayload = (IDiscardedPayload) getPackageObjectInstance("object.DiscardedPayloadImpl");
+        }
     }
 
     private static final String LATEST_VERSION = "v1_21_8";
