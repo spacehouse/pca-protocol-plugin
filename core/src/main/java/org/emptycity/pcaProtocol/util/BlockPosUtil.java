@@ -16,7 +16,7 @@ public class BlockPosUtil {
 
     // 从 long 编码中提取 y 坐标
     public static int getY(long encoded) {
-        return (int) (encoded & 0xFFFL);
+        return (int) ((encoded << 52) >> 52);
     }
 
     // 从 long 编码中提取 z 坐标
