@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
     id("com.gradleup.shadow") version "9.0.0-beta12"
     id("xyz.jpenilla.run-paper") version "2.3.1"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.17" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
 }
 
 allprojects {
@@ -49,6 +49,7 @@ dependencies {
     api(project(":v1_21_5", configuration = "reobf"))
     api(project(":v1_21_6", configuration = "reobf"))
     api(project(":v1_21_7", configuration = "reobf"))
+    api(project(":v1_21_9", configuration = "reobf"))
 }
 
 tasks {
@@ -73,7 +74,7 @@ tasks {
         expand(
                 "name" to project.name,
                 "version" to project.version,
-                "description" to project.description,
+                "description" to (project.description ?: ""),
                 "main" to "${project.group}.PcaProtocol"
         )
     }
